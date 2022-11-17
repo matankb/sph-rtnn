@@ -1,0 +1,3 @@
+/home/mkotlerb/sph/CMakeFiles/Triforce.dir
+/home/mkotlerb/sph/CMakeFiles/edit_cache.dir
+/home/mkotlerb/sph/CMakeFiles/rebuild_cache.dir

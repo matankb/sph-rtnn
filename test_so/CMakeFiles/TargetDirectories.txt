@@ -1,0 +1,7 @@
+/home/mkotlerb/sph/test_so/CMakeFiles/TestSo.dir
+/home/mkotlerb/sph/test_so/CMakeFiles/edit_cache.dir
+/home/mkotlerb/sph/test_so/CMakeFiles/rebuild_cache.dir
+/home/mkotlerb/sph/test_so/CMakeFiles/list_install_components.dir
+/home/mkotlerb/sph/test_so/CMakeFiles/install.dir
+/home/mkotlerb/sph/test_so/CMakeFiles/install/local.dir
+/home/mkotlerb/sph/test_so/CMakeFiles/install/strip.dir

@@ -1,0 +1,92 @@
+# Hidden directories to ignore
+.idea
+.vscode
+
+*Z_*/
+*z_*/
+*bin/
+data/*/
+doxygen/
+
+# File extensions to ignore
+*.hdf5
+*.xdmf
+*.csv
+*.dat
+*.out
+*.swp
+*.log
+*.tar
+*.tgz
+*.tar.gz
+*.png
+*.gif
+.lock
+*.err
+*.backup
+*.o*
+*.e*
+
+# Binaries
+Triforce
+
+# Object files
+*.o
+*.s
+*.dSYM
+*.a
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+
+# Unit test / coverage reports
+.coverage
+coverage.xml
+.pytest_cache/
+*.log
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Jetbrains
+cmake-build-*/
+
+# CMake files
+CMakeLists.txt
+CMakeCache.txt
+cmake_install.cmake
+*CMakeFiles/
+Makefile
+
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Latex
+*.dvi 
+*.bak  
+*.idx 
+*.ps 
+*.eps 
+*.pdf 
+*.aux
+*.log
+*.pdf
+main.pdf
+*.dvi
+*.swp
+*.out
+*.bbl
+*.blg
+*.toc
+*.snm
+*.vrb
+*.nav
+*.DS_Store
+*.fls 
+*.fdb_latexmk 
+
+# C++ 
+main

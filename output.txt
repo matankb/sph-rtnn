@@ -1,0 +1,13 @@
+[index = 10, batch_id = 0, knn = 5] Found this p: 1, max is 4294967295
+KNN = 5Now at this index 11
+
+[index = 11, batch_id = 0, knn = 5] Found this p: 4294967295, max is 4294967295
+KNN = 5Now at this index 15
+
+[index = 15, batch_id = 0, knn = 5] Found this p: 4294967295, max is 4294967295
+KNN = 5Now at this index 20
+
+[index = 20, batch_id = 0, knn = 5] Found this p: 4294967295, max is 4294967295
+KNN = 5Now at this index 25
+
+[index = 25, batch_id = 0, knn = 5] Found this p: 4294967295, max is 4294967295

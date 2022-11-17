@@ -1,0 +1,171 @@
+Consolidate compiler generated dependencies of target Triforce
+[ 50%] Building CXX object CMakeFiles/Triforce.dir/triforce.cpp.o
+
+In file included from /home/mkotlerb/sph/./src/SPH.h:18,
+                 from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/Diagnostics.h: In member function ‘void Diagnostics::updateDiagnostics()’:
+/home/mkotlerb/sph/./src/Diagnostics.h:43:49: error: ‘OpenMP’ is not a member of ‘Kokkos’; did you mean ‘Kokkos::Tools::Experimental::DeviceType::OpenMP’?
+   43 |                     Kokkos::RangePolicy<Kokkos::OpenMP>(0, pm->pNum),
+      |                                                 ^~~~~~
+In file included from /usr/local/include/impl/Kokkos_Profiling.hpp:48,
+                 from /usr/local/include/impl/Kokkos_Tools.hpp:52,
+                 from /usr/local/include/Kokkos_HostSpace.hpp:60,
+                 from /usr/local/include/Kokkos_View.hpp:54,
+                 from /usr/local/include/Kokkos_Parallel.hpp:54,
+                 from /usr/local/include/Kokkos_Serial.hpp:59,
+                 from /usr/local/include/decl/Kokkos_Declare_SERIAL.hpp:49,
+                 from /usr/local/include/KokkosCore_Config_DeclareBackend.hpp:47,
+                 from /usr/local/include/Kokkos_Core.hpp:53,
+                 from /home/mkotlerb/sph/./src/Utilities.h:46,
+                 from /home/mkotlerb/sph/triforce.cpp:1:
+/usr/local/include/impl/Kokkos_Profiling_Interface.hpp:70:3: note: ‘Kokkos::Tools::Experimental::DeviceType::OpenMP’ declared here
+   70 |   OpenMP,
+      |   ^~~~~~
+In file included from /home/mkotlerb/sph/./src/SPH.h:18,
+                 from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/Diagnostics.h:43:55: error: template argument 1 is invalid
+   43 |                     Kokkos::RangePolicy<Kokkos::OpenMP>(0, pm->pNum),
+      |                                                       ^
+/home/mkotlerb/sph/./src/Diagnostics.h:49:49: error: ‘OpenMP’ is not a member of ‘Kokkos’; did you mean ‘Kokkos::Tools::Experimental::DeviceType::OpenMP’?
+   49 |                     Kokkos::RangePolicy<Kokkos::OpenMP>(0, pm->pNum),
+      |                                                 ^~~~~~
+In file included from /usr/local/include/impl/Kokkos_Profiling.hpp:48,
+                 from /usr/local/include/impl/Kokkos_Tools.hpp:52,
+                 from /usr/local/include/Kokkos_HostSpace.hpp:60,
+                 from /usr/local/include/Kokkos_View.hpp:54,
+                 from /usr/local/include/Kokkos_Parallel.hpp:54,
+                 from /usr/local/include/Kokkos_Serial.hpp:59,
+                 from /usr/local/include/decl/Kokkos_Declare_SERIAL.hpp:49,
+                 from /usr/local/include/KokkosCore_Config_DeclareBackend.hpp:47,
+                 from /usr/local/include/Kokkos_Core.hpp:53,
+                 from /home/mkotlerb/sph/./src/Utilities.h:46,
+                 from /home/mkotlerb/sph/triforce.cpp:1:
+/usr/local/include/impl/Kokkos_Profiling_Interface.hpp:70:3: note: ‘Kokkos::Tools::Experimental::DeviceType::OpenMP’ declared here
+   70 |   OpenMP,
+      |   ^~~~~~
+In file included from /home/mkotlerb/sph/./src/SPH.h:18,
+                 from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/Diagnostics.h:49:55: error: template argument 1 is invalid
+   49 |                     Kokkos::RangePolicy<Kokkos::OpenMP>(0, pm->pNum),
+      |                                                       ^
+In file included from /home/mkotlerb/sph/./src/SPH.h:20,
+                 from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/NeighborsBase.h: In member function ‘void NeighborsBase::updateNeighborList()’:
+/home/mkotlerb/sph/./src/NeighborsBase.h:91:33: error: expected primary-expression before ‘const’
+   91 |             KOKKOS_CLASS_LAMBDA(const uint32_t &i) {
+      |                                 ^~~~~
+/home/mkotlerb/sph/./src/NeighborsBase.h:91:13: error: ‘KOKKOS_CLASS_LAMBDA’ was not declared in this scope; did you mean ‘KOKKOS_LAMBDA’?
+   91 |             KOKKOS_CLASS_LAMBDA(const uint32_t &i) {
+      |             ^~~~~~~~~~~~~~~~~~~
+      |             KOKKOS_LAMBDA
+In file included from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/SPH.h: In lambda function:
+/home/mkotlerb/sph/./src/SPH.h:541:24: error: ‘max’ was not declared in this scope
+  541 |                 uNew = max(tmp.u + dtH * du(pid), fptype(0.0));
+      |                        ^~~
+/home/mkotlerb/sph/./src/SPH.h:541:24: note: suggested alternatives:
+In file included from /usr/include/c++/11/algorithm:62,
+                 from /home/mkotlerb/sph/./src/Utilities.h:42,
+                 from /home/mkotlerb/sph/triforce.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note:   ‘std::max’
+ 3467 |     max(initializer_list<_Tp> __l, _Compare __comp)
+      |     ^~~
+In file included from /usr/local/include/Kokkos_Core.hpp:59,
+                 from /home/mkotlerb/sph/./src/Utilities.h:46,
+mkotlerb@hyrule:~/sph$ make > make_log.txt
+In file included from /home/mkotlerb/sph/./src/SPH.h:18,
+                 from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/Diagnostics.h: In member function ‘void Diagnostics::updateDiagnostics()’:
+/home/mkotlerb/sph/./src/Diagnostics.h:43:49: error: ‘OpenMP’ is not a member of ‘Kokkos’; did you mean ‘Kokkos::Tools::Experimental::DeviceType::OpenMP’?
+   43 |                     Kokkos::RangePolicy<Kokkos::OpenMP>(0, pm->pNum),
+      |                                                 ^~~~~~
+In file included from /usr/local/include/impl/Kokkos_Profiling.hpp:48,
+                 from /usr/local/include/impl/Kokkos_Tools.hpp:52,
+                 from /usr/local/include/Kokkos_HostSpace.hpp:60,
+                 from /usr/local/include/Kokkos_View.hpp:54,
+                 from /usr/local/include/Kokkos_Parallel.hpp:54,
+                 from /usr/local/include/Kokkos_Serial.hpp:59,
+                 from /usr/local/include/decl/Kokkos_Declare_SERIAL.hpp:49,
+                 from /usr/local/include/KokkosCore_Config_DeclareBackend.hpp:47,
+                 from /usr/local/include/Kokkos_Core.hpp:53,
+                 from /home/mkotlerb/sph/./src/Utilities.h:46,
+                 from /home/mkotlerb/sph/triforce.cpp:1:
+/usr/local/include/impl/Kokkos_Profiling_Interface.hpp:70:3: note: ‘Kokkos::Tools::Experimental::DeviceType::OpenMP’ declared here
+   70 |   OpenMP,
+      |   ^~~~~~
+In file included from /home/mkotlerb/sph/./src/SPH.h:18,
+                 from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/Diagnostics.h:43:55: error: template argument 1 is invalid
+   43 |                     Kokkos::RangePolicy<Kokkos::OpenMP>(0, pm->pNum),
+      |                                                       ^
+/home/mkotlerb/sph/./src/Diagnostics.h:49:49: error: ‘OpenMP’ is not a member of ‘Kokkos’; did you mean ‘Kokkos::Tools::Experimental::DeviceType::OpenMP’?
+   49 |                     Kokkos::RangePolicy<Kokkos::OpenMP>(0, pm->pNum),
+      |                                                 ^~~~~~
+In file included from /usr/local/include/impl/Kokkos_Profiling.hpp:48,
+                 from /usr/local/include/impl/Kokkos_Tools.hpp:52,
+                 from /usr/local/include/Kokkos_HostSpace.hpp:60,
+                 from /usr/local/include/Kokkos_View.hpp:54,
+                 from /usr/local/include/Kokkos_Parallel.hpp:54,
+                 from /usr/local/include/Kokkos_Serial.hpp:59,
+                 from /usr/local/include/decl/Kokkos_Declare_SERIAL.hpp:49,
+                 from /usr/local/include/KokkosCore_Config_DeclareBackend.hpp:47,
+                 from /usr/local/include/Kokkos_Core.hpp:53,
+                 from /home/mkotlerb/sph/./src/Utilities.h:46,
+                 from /home/mkotlerb/sph/triforce.cpp:1:
+/usr/local/include/impl/Kokkos_Profiling_Interface.hpp:70:3: note: ‘Kokkos::Tools::Experimental::DeviceType::OpenMP’ declared here
+   70 |   OpenMP,
+      |   ^~~~~~
+In file included from /home/mkotlerb/sph/./src/SPH.h:18,
+                 from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/Diagnostics.h:49:55: error: template argument 1 is invalid
+   49 |                     Kokkos::RangePolicy<Kokkos::OpenMP>(0, pm->pNum),
+      |                                                       ^
+In file included from /home/mkotlerb/sph/./src/SPH.h:20,
+                 from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/NeighborsBase.h: In member function ‘void NeighborsBase::updateNeighborList()’:
+/home/mkotlerb/sph/./src/NeighborsBase.h:91:33: error: expected primary-expression before ‘const’
+   91 |             KOKKOS_CLASS_LAMBDA(const uint32_t &i) {
+      |                                 ^~~~~
+/home/mkotlerb/sph/./src/NeighborsBase.h:91:13: error: ‘KOKKOS_CLASS_LAMBDA’ was not declared in this scope; did you mean ‘KOKKOS_LAMBDA’?
+   91 |             KOKKOS_CLASS_LAMBDA(const uint32_t &i) {
+      |             ^~~~~~~~~~~~~~~~~~~
+      |             KOKKOS_LAMBDA
+In file included from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/SPH.h: In lambda function:
+/home/mkotlerb/sph/./src/SPH.h:541:24: error: ‘max’ was not declared in this scope
+  541 |                 uNew = max(tmp.u + dtH * du(pid), fptype(0.0));
+      |                        ^~~
+/home/mkotlerb/sph/./src/SPH.h:541:24: note: suggested alternatives:
+In file included from /usr/include/c++/11/algorithm:62,
+                 from /home/mkotlerb/sph/./src/Utilities.h:42,
+                 from /home/mkotlerb/sph/triforce.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note:   ‘std::max’
+ 3467 |     max(initializer_list<_Tp> __l, _Compare __comp)
+      |     ^~~
+In file included from /usr/local/include/Kokkos_Core.hpp:59,
+                 from /home/mkotlerb/sph/./src/Utilities.h:46,
+                 from /home/mkotlerb/sph/triforce.cpp:1:
+/usr/local/include/Kokkos_MinMaxClamp.hpp:97:36: note:   ‘Kokkos::Experimental::max’
+   97 | KOKKOS_INLINE_FUNCTION constexpr T max(std::initializer_list<T> ilist,
+      |                                    ^~~
+In file included from /home/mkotlerb/sph/triforce.cpp:8:
+/home/mkotlerb/sph/./src/SPH.h: In lambda function:
+/home/mkotlerb/sph/./src/SPH.h:584:24: error: ‘max’ was not declared in this scope
+  584 |                 uNew = max(uMin(pid) + dtH * du(pid), 0.0);
+      |                        ^~~
+/home/mkotlerb/sph/./src/SPH.h:584:24: note: suggested alternatives:
+In file included from /usr/include/c++/11/algorithm:62,
+                 from /home/mkotlerb/sph/./src/Utilities.h:42,
+                 from /home/mkotlerb/sph/triforce.cpp:1:
+/usr/include/c++/11/bits/stl_algo.h:3467:5: note:   ‘std::max’
+ 3467 |     max(initializer_list<_Tp> __l, _Compare __comp)
+      |     ^~~
+In file included from /usr/local/include/Kokkos_Core.hpp:59,
+                 from /home/mkotlerb/sph/./src/Utilities.h:46,
+                 from /home/mkotlerb/sph/triforce.cpp:1:
+/usr/local/include/Kokkos_MinMaxClamp.hpp:97:36: note:   ‘Kokkos::Experimental::max’
+   97 | KOKKOS_INLINE_FUNCTION constexpr T max(std::initializer_list<T> ilist,
+      |                                    ^~~
+make[2]: *** [CMakeFiles/Triforce.dir/build.make:76: CMakeFiles/Triforce.dir/triforce.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:83: CMakeFiles/Triforce.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
