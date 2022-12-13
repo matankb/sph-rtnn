@@ -21,7 +21,7 @@ public:
   virtual ~SimulationBase() = default;
 
 public: // Class Functions
-  virtual void step( const fptype dt ) {};
+  virtual void step( const fptype dt, uint32_t timestamp ) {};
   virtual void report_start( uint32_t step, fptype time ) {};
   virtual void report_end( uint32_t step ) {};
 

@@ -543,6 +543,9 @@ CMakeFiles/Triforce.dir/triforce.cpp.o: triforce.cpp \
   /usr/include/c++/11/bits/fs_ops.h \
   src/ParticleManagerBase.h \
   src/Particle.h \
+  src/NeighborsBase.h \
+  src/Kernel.h \
+  src/optix.h \
   src/Parameters.h \
   src/ChainingMesh.h \
   src/LinkedList.h \
@@ -552,19 +555,10 @@ CMakeFiles/Triforce.dir/triforce.cpp.o: triforce.cpp \
   src/DiagnosticsBase.h \
   src/IdealGasEos.h \
   src/EosBase.h \
-  src/NeighborsBase.h \
-  src/Kernel.h \
-  src/optix.h \
   /software/kokkos/v3.6.01/cuda/include/desul/atomics/Compare_Exchange_GCC.hpp
 
 
 /software/kokkos/v3.6.01/cuda/include/desul/atomics/Compare_Exchange_GCC.hpp:
-
-src/optix.h:
-
-src/Kernel.h:
-
-src/NeighborsBase.h:
 
 src/EosBase.h:
 
@@ -579,6 +573,12 @@ src/LinkedList.h:
 src/ChainingMesh.h:
 
 src/Parameters.h:
+
+src/optix.h:
+
+src/Kernel.h:
+
+src/NeighborsBase.h:
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/atomic_word.h:
 

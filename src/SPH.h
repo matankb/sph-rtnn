@@ -30,7 +30,7 @@ class SPH : public SimulationBase {
     void initStep( fptype dt );
     void report_start( uint32_t step, fptype time ) override;
     void report_end( uint32_t step ) override;
-    void step( fptype dt ) override;
+    void step( fptype dt, uint32_t timestamp ) override;
     void zeroArrays();
     void sumDensity();
     void updateHsml();
@@ -177,6 +177,8 @@ void SPH::initializeParticles() {
 void SPH::initStep( const fptype dt ) {
   zeroArrays();
 
+  printf("INIT STEP");
+
   pm->updateDeviceMirror();
 
   neighborFinder->updateNeighborList();
@@ -184,7 +186,7 @@ void SPH::initStep( const fptype dt ) {
   pairCounter_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->pairCounter);
   neighborList_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->neighborList);
   interactionCount_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->interactionCount);
-
+  
   sumDensity();
 
   updateHsml();
@@ -201,7 +203,7 @@ void SPH::initStep( const fptype dt ) {
   diagnostics->updateDiagnostics();
 }
 
-void SPH::step( const fptype dt ) {
+void SPH::step( const fptype dt, uint32_t timestep ) {
   zeroArrays();
 
   advanceParticlesHalfStep( dt ); // skip in first step
@@ -213,6 +215,11 @@ void SPH::step( const fptype dt ) {
   pairCounter_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->pairCounter);
   neighborList_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->neighborList);
   interactionCount_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->interactionCount);
+
+
+  // print out calculated updated neighborList sequentially
+  save_neighbor_list_to_csv(neighborList_h, *pm, pairCounter_h, timestep);
+  
 
   sumDensity();
   updateHsml();
@@ -291,7 +298,6 @@ void SPH::sumDensity() {
         const neighbors n = neighborList_h(ipair);
         Particle p1 = pm->getParticle(n.pid1);
         Particle p2 = pm->getParticle(n.pid2);
-
         Kokkos::atomic_add(&fpBuffer(n.pid1), p2.mass / (PTINY + p2.rho) * n.w);
         Kokkos::atomic_add(&fpBuffer(n.pid2), p1.mass / (PTINY + p1.rho) * n.w);
       } // end kokkos_lambda
@@ -310,6 +316,7 @@ void SPH::sumDensity() {
     } // end kokkos_lambda
   ); // end parallel_for
 
+  printf("we are here...");
   Kokkos::parallel_for("SPH::sumDensity::loop2",
     Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, pairCounter_h()),
     KOKKOS_LAMBDA(const uint32_t &ipair) {
@@ -317,6 +324,7 @@ void SPH::sumDensity() {
       Particle p1 = pm->getParticleAtomic(n.pid1);
       Particle p2 = pm->getParticleAtomic(n.pid2);
 
+        // printf("Printing from RESULT: x = %f\n", p1.loc.x());
       Kokkos::atomic_add(&drho(n.pid1), n.w * p2.mass);
       Kokkos::atomic_add(&drho(n.pid2), n.w * p1.mass);
 

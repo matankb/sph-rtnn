@@ -17,6 +17,7 @@
 #include "Utilities.h"
 #include "Kernel.h"
 #include "optix.h"
+#include "Parameters.h"
 
 struct neighbors {
   uint32_t pid1 = 0;
@@ -77,6 +78,8 @@ NeighborsBase::NeighborsBase(const Parameters* params_input, const ParticleManag
 }
 
 void NeighborsBase::updateNeighborList() {
+  int ENABLE_RTNN = 1;
+
   // reset to zero (don't need to reset neighborList)
   Kokkos::deep_copy(pairCounter, 0);
   Kokkos::deep_copy(interactionCount, 0);
@@ -84,88 +87,143 @@ void NeighborsBase::updateNeighborList() {
   ParticleManagerBase pmCopy = *pm;
   Kernel kernelCopy = *kernel;
 
-  float* points = new float[3 * pm->pNum];
+  if (ENABLE_RTNN) {
+    float* points = new float[3 * pm->pNum];
   
-  // copy points into a normal float
-  for (int i = 0; i < pm->pNum; i++) {
-    auto pi = pmCopy.getParticleAtomic(i);
-    
-    double x = pi.loc.x();
-    double y =  pi.loc.y();
-    double z =  pi.loc.z();
+    // /*
 
-    points[(i * 3)] = x;
-    points[(i * 3) + 1] = y;
-    points[(i * 3) + 2] = z;
+    Kokkos::View<neighbors*>::HostMirror neighborList_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborList);
+    Kokkos::View<uint32_t*>::HostMirror interactionCount_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, interactionCount); // TODO: this copy might not be needed since it's been reset
+
+    // copy points into a normal float
+    // for (int i = 0; i < pm->pNum; i++) {
+    //   auto pi = pmCopy.getParticleAtomic(i);
+      
+    //   double x = pi.loc.x();
+    //   double y =  pi.loc.y();
+    //   double z =  pi.loc.z();
+
+    //   printf("i = %d, x = %f\n", i, x);
+
+    //   points[(i * 3)] = x;
+    //   points[(i * 3) + 1] = y;
+    //   points[(i * 3) + 2] = z;
+    // }
+
+    // manually fill 
+    points[0] = 0;
+    points[1] = 0;
+    points[2] = 0;
+    points[3] = 10;
+    points[4] = 10;
+    points[5] = 10;
+    points[6] = 0.00001;
+    points[7] = 0;
+    points[8] = 0;
+
+    printf("NUMBER OF POINTS %d", pm->pNum);
+    
+    // hand off to knn to get neighbor list
+    int neighbors_count = 3; // pm->pNum;
+    float** computed_neighbors = getNeighborList(points, neighbors_count);//)pm->pNum);
+
+    printf("\n======= NOW PRINTING NEIGHBORS LIST ====== \n\n");
+
+    // int i = 40;
+    // printf("%.20f , %.20f, %d\n\n", neighbors[0][0], points[21], neighbors[0][0] == points[21]);
+    
+    // not using a kokkos atomic for this because it gets converted back sequentially
+    int pCount = 0;
+
+    for (uint32_t i = 0; i < (neighbors_count * neighbors_count); i++) {
+      float* current_neighbor = computed_neighbors[i];
+      if (current_neighbor == NULL) { // computer_neighbors is null-terminated
+        // printf("Neighbor is null!");
+        // continue;
+        break;
+      }
+      
+      // get index of points
+      uint32_t first_index = -1;
+      uint32_t second_index = -1;
+      for (uint32_t j = 0; j < neighbors_count; j++) {
+        float x = points[(j * 3)];
+        float y = points[(j * 3) + 1];
+        float z = points[(j * 3) + 2];
+        if (i == 0) {
+          // printf("%0.5f, %0.5f, %0.5f\n", x, y, z);
+        }
+        if (current_neighbor[0] == x && current_neighbor[1] == y && current_neighbor[2] == z) {
+          first_index = j;
+        }
+        if (current_neighbor[3] == x && current_neighbor[4] == y && current_neighbor[5] == z) {
+          second_index = j;
+        }
+      }
+      
+      if (first_index == second_index) {
+        continue;
+      }
+
+      printf("<%f, %f, %f>, <%f, %f, %f>\n", current_neighbor[0], current_neighbor[1], current_neighbor[2], current_neighbor[3], current_neighbor[4], current_neighbor[5]);
+      printf("INDICES: <%d, %d>\n", first_index, second_index);
+
+      auto pi = pmCopy.getParticleAtomic(46);
+      auto pj = pmCopy.getParticleAtomic(second_index);
+      printf("SOME DATA: %f \n", pi.loc.x());
+
+      fptype mhsml = (pi.hsml + pj.hsml) / 2.0;
+      fptype w;
+      vec3<fptype> dwdx;
+      vec3<fptype> dx = pi.loc - pj.loc;
+      fptype radius = dx.length();
+      kernelCopy.computeKernel(w, dwdx, dx, radius, 0.5*(pi.hsml + pj.hsml));
+      // int newPCount = Kokkos::atomic_fetch_add(&pairCounter(), 1);
+
+      neighborList_h(pCount) = {first_index, second_index, w, dwdx};
+      // Kokkos::atomic_increment(&interactionCount(i));
+      // interactionCount_h(first_index)
+      pCount++;
+
+      // free the memory
+      free(computed_neighbors[i]);
+      printf("now we are here, right?");
+    }
+
+    // TODO: maybe have caching? but see my question below. this just resets neighbors list every time
+    // neighborList(1) = 
+    // TODO: max interactions
+
+    free(computed_neighbors);
+
+    printf("Setting the pair counter to: %d", pCount);
+    // copy back to device views
+    Kokkos::deep_copy(neighborList, neighborList_h);
+    Kokkos::deep_copy(interactionCount, interactionCount_h);
+    Kokkos::deep_copy(pairCounter, pCount);
+    return;
   }
 
-  // hand off to knn to get neighbor list
-  float** neighbors = getNeighborList(points, pm->pNum);
-  /*
-	printf("\n======= NOW PRINTING NEIGHBORS LIST ====== \n\n");
-	// int i = 40;
-	// printf("%.20f , %.20f, %d\n\n", neighbors[0][0], points[21], neighbors[0][0] == points[21]);
-	for (int i = 0; i < (pm->pNum * pm->pNum); i++) {
-		float* neighbor = neighbors[i];
-		if (neighbor == NULL) {
-			// printf("Neighbor is null!");
-			// continue;
-			return;
-		}
-		
-		// get index of points
-		int first_index = -1;
-		int second_index = -1;
-		for (int j = 0; j < pm->pNum; j++) {
-			float x = points[(j * 3)];
-			float y = points[(j * 3) + 1];
-			float z = points[(j * 3) + 2];
-			if (i == 0) {
-				// printf("%0.5f, %0.5f, %0.5f\n", x, y, z);
-			}
-			if (neighbor[0] == x && neighbor[1] == y && neighbor[2] == z) {
-				first_index = j;
-			}
-			if (neighbor[3] == x && neighbor[4] == y && neighbor[5] == z) {
-				second_index = j;
-			}
-		}
-
-		printf("<%f, %f, %f>, <%f, %f, %f>\n", neighbor[0], neighbor[1], neighbor[2], neighbor[3], neighbor[4], neighbor[5]);
-		printf("  <%d, %d>\n", first_index, second_index);
-
-    // free the memory
-    free(neighbors[i]);
-	}
-
-  free(neighbors);
-  /*
-
-  return;
-
-  /*
+  // nParticles()
 
   Kokkos::parallel_for(pmCopy.allParticlesPolicy(),
     KOKKOS_CLASS_LAMBDA(const uint32_t &i) {
       auto pi = pmCopy.getParticleDevice(i);
 
-      printf("Current i: %d\n", i);
-      double x = pi.loc.x();
-      double y =  pi.loc.y();
-      double z =  pi.loc.z();
-      // printf(" | Got values for i = %d \n", i);
-      points[0] = 1;
-      // points[(i * 3)] = x;
-      // points[(i * 3) + 1] = y;
-      // points[(i * 3) + 2] = z;
-
+      printf("SEARCHING THROUGH POINTS:\n");
       for (uint32_t j = 0; j < nParticles(); j++) {
         if (i != j) {
         if (pairCounter() >= maxInteractions()) { break; }
         auto pj = pmCopy.getParticleDevice(j);
 
+        // printf("<%f, %f, %f>, <%f, %f, %f>\n", pi.loc.x(), pi.loc.y(), pi.loc.z(), pj.loc.x(), pj.loc.y(), pj.loc.z());
+
         vec3<fptype> dx = pi.loc - pj.loc;
         fptype radius = dx.length();
+
+        printf("Computed radius max: %f\n", kernelCopy.scale_k_d() * pi.hsml);
+
+      // printf(pairCounter)
 
         if (radius <= (kernelCopy.scale_k_d() * pi.hsml)) {
 
@@ -194,8 +252,5 @@ void NeighborsBase::updateNeighborList() {
       } // end for j=i+1
     } // end kokkos_lambda
   ); // end parallel_for
-
-  */
-
 } // end updateNeighborList
 #endif // TRIFORCE_NEIGHBORS_BASE_H

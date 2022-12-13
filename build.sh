@@ -8,7 +8,8 @@ cp lib/liboptixNSearch.so ~/sph/src/
 cd ~/sph
 make
 echo ==== BUILT TRIFORCE ====
+rm -rf data/neighbors
 echo
 echo ==========
 echo
-./Triforce
+./Triforce --kokkos-threads=1
