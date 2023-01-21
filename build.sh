@@ -10,6 +10,6 @@ make
 echo ==== BUILT TRIFORCE ====
 rm -rf data/neighbors
 echo
-echo ==========
+echo ========== RUNNING TRIFORCE ==========
 echo
 ./Triforce --kokkos-threads=1

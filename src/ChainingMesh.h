@@ -254,7 +254,9 @@ void ChainingMesh::populateUniformRectangularMesh(const Domain domain) const {
         uint32_t nid_I1 = mesh->getLogicalNidFromCoord(i, j + 1, k);
         uint32_t nid_I2 = mesh->getLogicalNidFromCoord(i, j + 2, k);
 
-        mesh->node_loc[nid] = 2.0 * mesh->node_loc[nid_I1] - mesh->node_loc[nid_I2];
+        float twoPointZero = 2.0; // added by matan
+
+        mesh->node_loc[nid] = twoPointZero * mesh->node_loc[nid_I1] - mesh->node_loc[nid_I2];
 
         uint32_t jr = mesh->nn_g.y() - 1 - j;
 
@@ -262,7 +264,9 @@ void ChainingMesh::populateUniformRectangularMesh(const Domain domain) const {
         nid_I1 = mesh->getLogicalNidFromCoord(i, jr-1, k);
         nid_I2 = mesh->getLogicalNidFromCoord(i, jr-2, k);
 
-        mesh->node_loc[nidr] = 2.0 * mesh->node_loc[nid_I1] - mesh->node_loc[nid_I2];
+        // float twoPointZero = 2.0;
+
+        mesh->node_loc[nidr] = (fptype) 2.0 * mesh->node_loc[nid_I1] - mesh->node_loc[nid_I2];
       } // end for(k)
     } // end for(j)
   } // end for(i)
@@ -275,7 +279,7 @@ void ChainingMesh::populateUniformRectangularMesh(const Domain domain) const {
         uint32_t nid_I1 = mesh->getLogicalNidFromCoord(i, j, k + 1);
         uint32_t nid_I2 = mesh->getLogicalNidFromCoord(i, j, k + 2);
 
-        mesh->node_loc[nid] = 2.0 * mesh->node_loc[nid_I1] - mesh->node_loc[nid_I2];
+        mesh->node_loc[nid] = ((float) 2.0) * mesh->node_loc[nid_I1] - mesh->node_loc[nid_I2];
 
         uint32_t kr = mesh->nn_g.z() - 1 - k;
 
@@ -283,7 +287,7 @@ void ChainingMesh::populateUniformRectangularMesh(const Domain domain) const {
         nid_I1 = mesh->getLogicalNidFromCoord(i, j, kr-1);
         nid_I2 = mesh->getLogicalNidFromCoord(i, j, kr-2);
 
-        mesh->node_loc[nidr] = 2.0 * mesh->node_loc[nid_I1] - mesh->node_loc[nid_I2];
+        mesh->node_loc[nidr] = ((float) 2.0) * mesh->node_loc[nid_I1] - mesh->node_loc[nid_I2];
       } // end for(k)
     } // end for(j)
   } // end for(i)

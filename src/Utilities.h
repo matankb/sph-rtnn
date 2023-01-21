@@ -55,6 +55,8 @@ using std::make_unique;
 using std::shared_ptr;
 using std::make_shared;
 
+#define USE_FLOATS 1
+
 // ---- data type for real numbers -----
 #ifdef USE_FLOATS
 using fptype = float;

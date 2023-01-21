@@ -547,6 +547,7 @@ CMakeFiles/Triforce.dir/triforce.cpp.o: triforce.cpp \
   src/Kernel.h \
   src/optix.h \
   src/Parameters.h \
+  src/constants.h \
   src/ChainingMesh.h \
   src/LinkedList.h \
   src/SPH.h \
@@ -571,6 +572,8 @@ src/SimulationBase.h:
 src/LinkedList.h:
 
 src/ChainingMesh.h:
+
+src/constants.h:
 
 src/Parameters.h:
 

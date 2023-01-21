@@ -89,7 +89,7 @@ KOKKOS_FUNCTION void Kernel::Gauss(fptype &w, vec3<fptype> &dwdx, vec3<fptype> d
 
   if (qk >= 0.0 && qk <= 1.0e3) {
     w = factor * exp(-1.0 * SQR(qk));
-    dwdx = dx * w * -2.0 / SQR(hsml);
+    dwdx = dx * w * ((float) -2.0) / SQR(hsml);
   } else {
     w = 0.0;
     dwdx = {0.0, 0.0, 0.0};

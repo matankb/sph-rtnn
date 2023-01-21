@@ -32,8 +32,8 @@ class SPH : public SimulationBase {
     void report_end( uint32_t step ) override;
     void step( fptype dt, uint32_t timestamp ) override;
     void zeroArrays();
-    void sumDensity();
-    void updateHsml();
+    void sumDensity(const uint32_t timestep);
+    void updateHsml(const uint32_t timestep);
     void artificialViscosity();
     void internalForces();
     void initializeParticles();
@@ -181,15 +181,28 @@ void SPH::initStep( const fptype dt ) {
 
   pm->updateDeviceMirror();
 
-  neighborFinder->updateNeighborList();
+  neighborFinder->updateNeighborList(1);
+  neighborFinder->sortNeighborList(1);
 
   pairCounter_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->pairCounter);
   neighborList_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->neighborList);
   interactionCount_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->interactionCount);
   
-  sumDensity();
+  save_neighbor_list_to_csv(neighborList_h, *pm, pairCounter_h, 1);
 
-  updateHsml();
+  // if (true) {
+  //   Particle tmp = pm->getParticle(2);
+  //   printf("At timestep 1 pre-sum-density, rtnn = %d, particle(2).roh = %0.70f\n", ENABLE_RTNN, tmp.rho);
+  // }
+  
+  sumDensity(1);
+
+  // if (true) {
+  //   Particle tmp = pm->getParticle(2);
+  //   printf("At timestep 1 post-sum-density, rtnn = %d, particle(2).roh = %0.70f\n", ENABLE_RTNN, tmp.rho);
+  // }
+
+  updateHsml(1);
 
   if (params->sim.artificial_viscosity) { artificialViscosity(); }
 
@@ -210,7 +223,8 @@ void SPH::step( const fptype dt, uint32_t timestep ) {
 
   pm->updateDeviceMirror();
 
-  neighborFinder->updateNeighborList();
+  neighborFinder->updateNeighborList(timestep);
+  neighborFinder->sortNeighborList(timestep);
 
   pairCounter_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->pairCounter);
   neighborList_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->neighborList);
@@ -220,9 +234,8 @@ void SPH::step( const fptype dt, uint32_t timestep ) {
   // print out calculated updated neighborList sequentially
   save_neighbor_list_to_csv(neighborList_h, *pm, pairCounter_h, timestep);
   
-
-  sumDensity();
-  updateHsml();
+  sumDensity(timestep);
+  updateHsml(timestep);
 
   if (params->sim.artificial_viscosity) { artificialViscosity(); }
 
@@ -272,7 +285,7 @@ void SPH::zeroArrays() {
   Kokkos::deep_copy(fpBufferV, vec3<fptype>());
 }
 
-void SPH::sumDensity() {
+void SPH::sumDensity(const uint32_t timestamp) {
   constexpr bool normalizeDensity = false; // nor_density is not set in yorick
   const uint32_t npttl = pm->pNum;
   vec3<fptype> hv = {0.0, 0.0, 0.0};
@@ -312,11 +325,16 @@ void SPH::sumDensity() {
       vec3<fptype> dwdx = {0.0, 0.0, 0.0};
       neighborFinder->kernel->computeKernel(w, dwdx, hv, r, tmp.hsml);
       tmp.rho = w*tmp.mass;
+      if (timestamp == 1 && pid == 2) {
+        write_float("rho_loop1", tmp.rho);
+      }
       pm->setParticle(pid, tmp);
     } // end kokkos_lambda
   ); // end parallel_for
 
-  printf("we are here...");
+  if (timestamp == 1) {
+    write_float("pre_loop2_drho_2", drho(2));
+  }
   Kokkos::parallel_for("SPH::sumDensity::loop2",
     Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, pairCounter_h()),
     KOKKOS_LAMBDA(const uint32_t &ipair) {
@@ -324,18 +342,34 @@ void SPH::sumDensity() {
       Particle p1 = pm->getParticleAtomic(n.pid1);
       Particle p2 = pm->getParticleAtomic(n.pid2);
 
+      if (timestamp == 1) {
+        if (n.pid2 == 2) {
+          write_float("add_particle_2", n.w * p1.mass);
+        }
+        if (n.pid1 == 2) {
+          write_float("add_particle_2", n.w * p2.mass);
+        }
+      }
+
         // printf("Printing from RESULT: x = %f\n", p1.loc.x());
       Kokkos::atomic_add(&drho(n.pid1), n.w * p2.mass);
       Kokkos::atomic_add(&drho(n.pid2), n.w * p1.mass);
 
     } // end kokkos_lambda
   ); // end parallel_for
+  if (timestamp == 1) {
+    write_float("post_loop2_drho_2", drho(2));
+  }
   
   Kokkos::parallel_for("SPH::sumDensity::loop3",
     pm->allParticlesHostPolicy(),
     KOKKOS_LAMBDA(const uint32_t &pid) {
       Particle tmp = pm->getParticle(pid);
       tmp.rho = tmp.rho + drho(pid);
+      if (timestamp == 1 && pid == 2) {
+        write_float("rho_loop3_postchange", tmp.rho);
+        write_float("drho_loop3", drho(pid));
+      }
       pm->setParticle(pid, tmp);
     } // end kokkos_lambda
   ); // end parallel_for
@@ -352,7 +386,7 @@ void SPH::sumDensity() {
   } // endif(normalizeDensity)
 } // end sumDensity
 
-void SPH::updateHsml() {
+void SPH::updateHsml(const uint32_t timestep) {
   switch (params->sim.smoothing_length_evolution) {
     case 0:
       break; // end case 0
@@ -362,6 +396,9 @@ void SPH::updateHsml() {
         KOKKOS_LAMBDA(const uint32_t &pid) {
           Particle tmp = pm->getParticle(pid);
           tmp.hsml = 2.0 * pow(tmp.mass / tmp.rho, 1.0 / fpDIM);
+          if (timestep == 1 && pid == 2) {
+            printf("For the next frame (Currently on frame %d), updateHsml on %d, mass = %0.70f, rho = %0.70f, fpDIM = %0.70f\n", timestep, pid, tmp.mass, tmp.rho, fpDIM);
+          }
           pm->setParticle(pid, tmp);
         }
       );

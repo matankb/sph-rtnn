@@ -1,5 +1,6 @@
 #include "Utilities.h"
 #include <Kokkos_Core.hpp>
+#include <math.h>
 
 #include "IO.h"
 #include "Parameters.h"
@@ -7,8 +8,39 @@
 #include "LinkedList.h"
 #include "SPH.h"
 
-int main(int argc, char **argv) {
+void example(double radius_limit, double x) {
+	// fptype mass, fptype rho,
+    //                        fptype p, fptype u,
+    //                        fptype c, fptype hsml,
+    //                        vec3<fptype> loc, vec3<fptype> vel
+	vec3<fptype> loc1{0.04545456171035766601562500000000000000000000000000000000000000000000000000000000000, -0.500000, -0.500000};
+	vec3<fptype> loc2{0.0050505604594945907592773437500000000000000000000000000000000000000000000000000000000000000000000000, -0.500000, -0.500000};
+	vec3<fptype> vel{0, 0, 0};
+	Particle pi(1, 1, 1, 1, 1, 1, loc1, vel);
+	Particle pj(1, 1, 1, 1, 1, 1, loc2, vel);
 
+
+	// vec3<fptype> dwdx;
+	vec3<fptype> dx = pi.loc - pj.loc;
+	fptype radius = dx.length();
+
+	printf("Radius              : %0.100f\n", radius);
+	printf("radius squared      : %0.100f\n", radius * radius);
+	// printf("random number:      : %0.100f\n", x);
+	// printf("random number square: %0.100f | %s\n", x * x, radius <= x ? "yes" : "no");
+	printf("radius limit        : %0.100f\n", radius_limit);
+	printf("radius limit squared: %0.100f\n", radius_limit * radius_limit);
+
+	double radius_rtnn = calculate_radius(loc1.x(), loc1.y(), loc1.z(), loc2.x(), loc2.y(), loc2.z());
+	printf("Radius RTNN         : %0.100f\n", radius_rtnn);
+
+	printf("\n\Inside radius for SPH? %d\n", radius <= radius_limit);
+	printf("\n\Inside radius for RTNN? %d\n", radius_rtnn <= (radius_limit * radius_limit));
+}
+
+int main(int argc, char **argv) {
+	// example(0.040404, 1);
+	// return 0;
 	Kokkos::initialize( argc, argv );
 	{
 		std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
