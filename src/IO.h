@@ -23,7 +23,7 @@ void save_particles_to_csv(const ParticleManagerBase &pm, const std::string &sim
   // If directory does not exist, it is created.
   // fs::creat_directory return 1 if created, 0 if already exists (or is not created)
   fs::path path = fs::current_path();
-  path /= fs::path("data/" POINTS_PATH);
+  path /= fs::path("data/" POINTS_PATH + sim_name);
   fs::create_directory(path);
 
   // Create file path, open ofstream object

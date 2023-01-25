@@ -159,7 +159,7 @@ void NeighborsBase::updateNeighborList(int frame) {
   printf("\n\nHSML: Frame = %d, Particle #2 HSML (manual, non-device) = %0.70f\n\n", frame, pmCopy.getParticle(2).hsml);
 
   if (ENABLE_RTNN) {
-    float* points = new float[3 * pm->pNum];
+    fptype* points = new fptype[3 * pm->pNum];
   
     // /*
 

@@ -223,6 +223,8 @@ void SPH::step( const fptype dt, uint32_t timestep ) {
 
   pm->updateDeviceMirror();
 
+  // right before the neighbor list is updated, save the list of points that it is operating on
+  save_particles_to_csv(*pm, "before", timestep);
   neighborFinder->updateNeighborList(timestep);
   neighborFinder->sortNeighborList(timestep);
 

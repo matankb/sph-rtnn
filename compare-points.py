@@ -99,4 +99,4 @@ def compare_all_csvs():
 
 compare_all_csvs()
 
-# compare_csvs(0)
+# compare_csvs(13)

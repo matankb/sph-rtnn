@@ -18,7 +18,7 @@ def parse_csv(path):
         return results
 
 # returns True if all pairs in rows_a has a corresponding pair in rows_b
-def does_csv_match(rows_a, rows_b):
+def does_csv_match(rows_a, rows_b, do_it):
     global total_matched
     global total_missed
     all_matched = True
@@ -26,8 +26,10 @@ def does_csv_match(rows_a, rows_b):
     for rowa in rows_a:
         pid1 = rowa[0]
         pid2 = rowa[1]
-        matched = True
+        matched = False
         for rowb in rows_b:
+            # if pid1 == "54" and pid2 == "50" and do_it:
+                # print(rowb[0] + ", " + rowb[1])
             if (rowb[0] == pid1 and rowb[1] == pid2) or (rowb[0] == pid2 and rowb[1] == pid1):
                 if rowa[2] == rowb[2] and rowa[3] == rowb[3] and rowb[4] == rowb[4] and rowb[5] == rowb[5]:
                     matched = True
@@ -55,14 +57,15 @@ def compare_csvs(num):
     matched = True
 
     if not len(rows_a) == len(rows_b):
+        # printf(len(rows_a))
         print("Different lengths: " + path_a + " and " + path_b)
         matched = False
 
-    if not does_csv_match(rows_a, rows_b):
+    if not does_csv_match(rows_a, rows_b, True):
         print("Problem with comparing " + path_a + " to " + path_b)
         matched = False
         
-    if not does_csv_match(rows_b, rows_a):
+    if not does_csv_match(rows_b, rows_a, False):
         print("Problem with comparing " + path_b + " to " + path_a)
         matched = False
     # if matched:
@@ -90,4 +93,4 @@ def compare_all_csvs():
 
 compare_all_csvs()
 
-# compare_csvs(0)
+# compare_csvs(1393)

@@ -8,39 +8,56 @@
 #include "LinkedList.h"
 #include "SPH.h"
 
-void example(double radius_limit, double x) {
-	// fptype mass, fptype rho,
-    //                        fptype p, fptype u,
-    //                        fptype c, fptype hsml,
-    //                        vec3<fptype> loc, vec3<fptype> vel
-	vec3<fptype> loc1{0.04545456171035766601562500000000000000000000000000000000000000000000000000000000000, -0.500000, -0.500000};
-	vec3<fptype> loc2{0.0050505604594945907592773437500000000000000000000000000000000000000000000000000000000000000000000000, -0.500000, -0.500000};
+void example() {
+	fptype radius_limit = 0.040404;
+	fptype p1_x = 0.045454561710357666015625;
+	fptype p2_x = 0.00505056045949459075927734375;
+
+	// test using manual method
+	vec3<fptype> loc1{p1_x, -0.500000, -0.500000};
+	vec3<fptype> loc2{p2_x, -0.500000, -0.500000};
 	vec3<fptype> vel{0, 0, 0};
 	Particle pi(1, 1, 1, 1, 1, 1, loc1, vel);
 	Particle pj(1, 1, 1, 1, 1, 1, loc2, vel);
 
-
-	// vec3<fptype> dwdx;
+	vec3<fptype> dwdx;
 	vec3<fptype> dx = pi.loc - pj.loc;
 	fptype radius = dx.length();
+	bool finds_neighbor_manual = radius <= radius_limit;
 
-	printf("Radius              : %0.100f\n", radius);
-	printf("radius squared      : %0.100f\n", radius * radius);
-	// printf("random number:      : %0.100f\n", x);
-	// printf("random number square: %0.100f | %s\n", x * x, radius <= x ? "yes" : "no");
-	printf("radius limit        : %0.100f\n", radius_limit);
-	printf("radius limit squared: %0.100f\n", radius_limit * radius_limit);
+	// test using rtnn
+	fptype* points = new fptype[3 * 3];
+	points[0] = p1_x;
+	points[1] = -0.5;
+	points[2] = -0.5;
+	points[3] = p2_x;
+	points[4] = -0.5;
+	points[5] = -0.5;
 
-	double radius_rtnn = calculate_radius(loc1.x(), loc1.y(), loc1.z(), loc2.x(), loc2.y(), loc2.z());
-	printf("Radius RTNN         : %0.100f\n", radius_rtnn);
+	fptype** neighbors = getNeighborList(points, 2, radius_limit, 0);
+	int pairs_generated_rtnn = 0;
+	int i = 0;
+	while (neighbors[i] != NULL) {
+		if (neighbors[i][0] == neighbors[i][3] && neighbors[i][1] == neighbors[i][4] && neighbors[i][2] == neighbors[i][5]) {
+			i++;
+			continue; // since `points` is both the query and search array, rtnn will return the same (p, p) as a neighbor pair, but we don't want to count that
+		}
+		pairs_generated_rtnn++;
+		printf("== Neighbor Pair ==\n");
+		for (int j = 0; j < 6; j++) {
+			printf("%0.70f\n", neighbors[i][j]);
+		}
+		i++;
+	}
 
-	printf("\n\Inside radius for SPH? %d\n", radius <= radius_limit);
-	printf("\n\Inside radius for RTNN? %d\n", radius_rtnn <= (radius_limit * radius_limit));
+	printf("\nInside radius for RTNN? %d\n", pairs_generated_rtnn > 0);
+	printf("Inside radius for SPH? %d\n", finds_neighbor_manual);
 }
 
 int main(int argc, char **argv) {
-	// example(0.040404, 1);
-	// return 0;
+	example();
+	return 0;
+
 	Kokkos::initialize( argc, argv );
 	{
 		std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
