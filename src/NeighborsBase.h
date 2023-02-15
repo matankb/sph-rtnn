@@ -62,6 +62,9 @@ NeighborsBase::NeighborsBase(const Parameters* params_input, const ParticleManag
   nParticles = Kokkos::View<uint32_t, Kokkos::DefaultExecutionSpace::memory_space>("Triforce::NeighborsBase::nParticles");
   Kokkos::deep_copy(nParticles, pm->pNum);
 
+  printf("max_neighbors = %d\n", params->sim.max_neighbors);
+  printf("maxSize = %d\n", pm->maxSize);
+
   maxNeighbors = Kokkos::View<uint32_t, Kokkos::DefaultExecutionSpace::memory_space>("Triforce::NeighborsBase::maxNeighbors");
   Kokkos::deep_copy(maxNeighbors, params->sim.max_neighbors);
 
@@ -95,6 +98,8 @@ bool compareNeighbors(neighbors* a, neighbors* b) {
 }
 
 void NeighborsBase::sortNeighborList(int frame) {
+  return; // TEMPORARY
+  
   ParticleManagerBase pmCopy = *pm;
   Kernel kernelCopy = *kernel;
 
@@ -102,6 +107,8 @@ void NeighborsBase::sortNeighborList(int frame) {
   Kokkos::View<uint32_t>::HostMirror pairCounter_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, pairCounter);
 
   // first normalize
+  printf("Pair counter is: %d", pairCounter_h());
+  printf("normalizing\n");
   for (int i = 0; i < pairCounter_h(); i++) {
     neighbors pair = neighborList_h(i);
     if (pair.pid1 < pair.pid2) {
@@ -125,6 +132,7 @@ void NeighborsBase::sortNeighborList(int frame) {
       neighborList_h(i) = pair;
     }
   }
+  printf("normalizing finished\n");
 
   // then sort
   for (int i = 0; i < pairCounter_h(); i++) {
@@ -152,14 +160,11 @@ void NeighborsBase::updateNeighborList(int frame) {
   ParticleManagerBase pmCopy = *pm;
   Kernel kernelCopy = *kernel;
 
-  if (frame == 7) {
-    printf("Outside, p3_x = %0.70f\n", pmCopy.getParticle(3).loc.x());
-  }
-
-  printf("\n\nHSML: Frame = %d, Particle #2 HSML (manual, non-device) = %0.70f\n\n", frame, pmCopy.getParticle(2).hsml);
+  auto startSearch = high_resolution_clock::now();
 
   if (ENABLE_RTNN) {
     fptype* points = new fptype[3 * pm->pNum];
+    fptype* radii = new fptype[pm->pNum];
   
     // /*
 
@@ -167,6 +172,7 @@ void NeighborsBase::updateNeighborList(int frame) {
     Kokkos::View<uint32_t*>::HostMirror interactionCount_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, interactionCount); // TODO: this copy might not be needed since it's been reset
 
     // copy points into a normal float
+    // and calculate radii based on hsml and scale
     for (int i = 0; i < pm->pNum; i++) {
       auto pi = pmCopy.getParticle(i);
       
@@ -181,6 +187,8 @@ void NeighborsBase::updateNeighborList(int frame) {
       points[(i * 3)] = x;
       points[(i * 3) + 1] = y;
       points[(i * 3) + 2] = z;
+
+      radii[i] = kernelCopy.scale_k * pi.hsml;
     }
 
     // manually fill 
@@ -198,7 +206,9 @@ void NeighborsBase::updateNeighborList(int frame) {
     
     // hand off to knn to get neighbor list
     int neighbors_count = pm->pNum;
-    float** computed_neighbors = getNeighborList(points, neighbors_count, radius_limit, frame);//)pm->pNum);
+    int max_interactions = pm->maxSize * params->sim.max_neighbors;
+    fptype* a = new fptype[1];
+    float** computed_neighbors = getNeighborList(points, radii, neighbors_count, radius_limit, max_interactions, frame);//)pm->pNum);
 
     // printf("\n======= NOW PRINTING NEIGHBORS LIST ====== \n\n");
 
@@ -299,6 +309,11 @@ void NeighborsBase::updateNeighborList(int frame) {
     Kokkos::deep_copy(neighborList, neighborList_h);
     Kokkos::deep_copy(interactionCount, interactionCount_h);
     Kokkos::deep_copy(pairCounter, pCount);
+
+    auto endSearch = high_resolution_clock::now();
+    double searchTime = (duration_cast<microseconds>(endSearch - startSearch)).count();
+    printf("Search time: %f", searchTime);
+
     return;
   }
 
@@ -306,10 +321,6 @@ void NeighborsBase::updateNeighborList(int frame) {
 
   Kokkos::parallel_for(pmCopy.allParticlesPolicy(),
     KOKKOS_CLASS_LAMBDA(const uint32_t &i) {
-      if (frame == 7) {
-        printf("At frame 7, DEVICE 3th X = %0.70f\n", pmCopy.getParticleDevice(3).loc.x());
-        // printf("At frame 7, DEVICE 7th X = %0.70f\n", pmCopy.getParticleDevice(7).loc.x());
-      }
       // printf("we are at frame = %d\n", frame);
       // printf("Max interactions: %d\n", maxInteractions());
       auto pi = pmCopy.getParticleDevice(i);
@@ -367,5 +378,9 @@ void NeighborsBase::updateNeighborList(int frame) {
       } // end for j=i+1
     } // end kokkos_lambda
   ); // end parallel_for
+
+  auto endSearch = high_resolution_clock::now();
+  double searchTime = (duration_cast<microseconds>(endSearch - startSearch)).count();
+  printf("Search time: %f", searchTime);
 } // end updateNeighborList
 #endif // TRIFORCE_NEIGHBORS_BASE_H

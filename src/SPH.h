@@ -37,8 +37,8 @@ class SPH : public SimulationBase {
     void artificialViscosity();
     void internalForces();
     void initializeParticles();
-    void advanceParticlesHalfStep( fptype dt );
-    void advanceParticles( fptype dt );
+    void advanceParticlesHalfStep( fptype dt, const uint32_t timestep );
+    void advanceParticles( fptype dt, const uint32_t timestep );
 
   public: // Public Class Data
     ParticleManagerBase* pm;
@@ -181,8 +181,11 @@ void SPH::initStep( const fptype dt ) {
 
   pm->updateDeviceMirror();
 
+
   neighborFinder->updateNeighborList(1);
+  printf("now sorting...");
   neighborFinder->sortNeighborList(1);
+  printf("Finished sorting!");
 
   pairCounter_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->pairCounter);
   neighborList_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->neighborList);
@@ -211,7 +214,7 @@ void SPH::initStep( const fptype dt ) {
 
   internalForces();
 
-  advanceParticles( dt );
+  advanceParticles( dt, 1 );
 
   diagnostics->updateDiagnostics();
 }
@@ -219,14 +222,17 @@ void SPH::initStep( const fptype dt ) {
 void SPH::step( const fptype dt, uint32_t timestep ) {
   zeroArrays();
 
-  advanceParticlesHalfStep( dt ); // skip in first step
+  advanceParticlesHalfStep( dt, timestep ); // skip in first step
 
   pm->updateDeviceMirror();
 
   // right before the neighbor list is updated, save the list of points that it is operating on
-  save_particles_to_csv(*pm, "before", timestep);
+  // save_particles_to_csv(*pm, "before", timestep);
+  
   neighborFinder->updateNeighborList(timestep);
+  printf("now sorting...");
   neighborFinder->sortNeighborList(timestep);
+  printf("Finished sorting\n");
 
   pairCounter_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->pairCounter);
   neighborList_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, neighborFinder->neighborList);
@@ -246,7 +252,7 @@ void SPH::step( const fptype dt, uint32_t timestep ) {
 
   internalForces();
 
-  advanceParticles( dt );
+  advanceParticles( dt, timestep );
 
   diagnostics->updateDiagnostics();
 }
@@ -593,7 +599,7 @@ void SPH::internalForces() {
   } // endif(AFLAG)
 } // end internalForces
 
-void SPH::advanceParticlesHalfStep( const fptype dt ) {
+void SPH::advanceParticlesHalfStep( const fptype dt, const uint32_t timestep ) {
   const fptype dtH = 0.5 * dt;
 
   // Advance the internal energies, velocities
@@ -627,17 +633,50 @@ void SPH::advanceParticlesHalfStep( const fptype dt ) {
         uNew = tmp.u + dtH * (fptype(-1.0) * tmp.p / tmp.rho * divV(pid));  // divV is a vector!
         // + CU1 * (pm->getRho(i) * dudrho[i]) * divV[i]); // CU1=0
         vec3<fptype> vNew; //, xNew;
-        vNew = tmp.vel + dtH * (fptype(-1.0) * gradP(pid) / tmp.rho);
+        vec3<fptype> vNew_test;
+
+          vNew = tmp.vel + dtH * (fptype(-1.0) * gradP(pid) / tmp.rho);
+          if (vNew.x() != vNew.x()) { // x is NaN
+            // vNew = tmp.vel + dtH * (fptype(-1.0) * gradP(pid));
+            // if x is NaN, don't advance (TEMPORARY!)
+          }
+
+        /**
+
+        vNew_test = vNew = tmp.vel + dtH * (fptype(-1.0) * gradP(pid) / tmp.rho);
+
+        // calculateing vNew.x() = -7.735811 + dtH + (-1 * 0 / 0)
+
+        if ((timestep == 949) && pid == 0) {
+          printf("\n\n===== HALF LOOK HERE (timestep = %d)======\n\n", timestep);
+          // printf("dt = %0.10f\n", dt);
+          printf("oldVel = <%f, %f, %f>\n", tmp.vel.x(), tmp.vel.y(), tmp.vel.z());
+          printf("gradP(pid) = <%f, %f, %f>\n", gradP(pid).x(), gradP(pid).y(), gradP(pid).z());
+          printf("tmp.rho = %0.100f\n", tmp.rho);
+          printf("vNew = <%f, %f, %f>\n", vNew.x(), vNew.y(), vNew.z());
+          printf("vNew_test = <%f, %f, %f>\n", vNew_test.x(), vNew_test.y(), vNew_test.z());
+          // printf("The numbers = <%f, %f, %f, %f>\n", gradP(pid).x(), gradP(pid).y(), gradP(pid).z(), PTINY);
+          // printf("Particle location (before) = %0.10f\n", tmp.loc.x());
+          // printf("Particle location = %0.10f\n", xNew.x());
+
+          printf("\n\n ====== STOP HALF LOOKING ===== \n\n");
+        }
+
+        */
 
         tmp.u = uNew;
-        tmp.vel = vNew;
+        if (vNew.x() == vNew.x()) { // only advance if x != NaN
+          tmp.vel = vNew;
+        } else {
+          tmp.vel = tmp.vel + dtH * (fptype(-1.0) * gradP(pid));
+        }
         pm->setParticle(pid, tmp);
       } // end kokkos_lambda
     ); // end parallel_for
   } //endif(AFLAG)
 } // end advanceParticlesHalfStep
 
-void SPH::advanceParticles( const fptype dt ) {
+void SPH::advanceParticles( const fptype dt, const uint32_t timestep ) {
   const fptype dtH = 0.5 * dt;
 
   // Advance the internal energies, velocities, and positions
@@ -669,7 +708,20 @@ void SPH::advanceParticles( const fptype dt ) {
         uNew = tmp.u + dtH * (fptype(-1.0) * tmp.p / (PTINY + tmp.rho) * divV(pid));
         // + CU1 * (pm->getRho(i) * dudrho[i]) * divV[i]); // CU1=0
         vNew = tmp.vel + dtH * (fptype(-1.0) * gradP(pid) / (PTINY + tmp.rho) );
+
         xNew = tmp.loc + dt * vNew;
+
+        if ((timestep == 948 || timestep == 949) && pid == 0) {
+          printf("\n\n===== LOOK HERE (timestep = %d)======\n\n", timestep);
+          // printf("dt = %0.10f\n", dt);
+          printf("oldVel = <%f, %f, %f>\n", tmp.vel.x(), tmp.vel.y(), tmp.vel.z());
+          printf("vNew = <%f, %f, %f>\n", vNew.x(), vNew.y(), vNew.z());
+          printf("The numbers = <%f, %f, %f, %f>\n", gradP(pid).x(), gradP(pid).y(), gradP(pid).z(), PTINY);
+          printf("Particle location (before) = %0.10f\n", tmp.loc.x());
+          printf("Particle location = %0.10f\n", xNew.x());
+
+          printf("\n\n ====== STOP LOOKING ===== \n\n");
+        }
 
         tmp.u = uNew;
         tmp.vel = vNew;

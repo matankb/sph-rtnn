@@ -16,9 +16,9 @@ void write_float(const std::string &label, fptype data) {
 
 void save_particles_to_csv(const ParticleManagerBase &pm, const std::string &sim_name, const uint32_t timestep) {
   std::cout << " Saving frame number " << timestep << std::endl;
-  if (timestep > 2) {
-    // exit(0);
-  }
+  // if (timestep > 949) {
+  //   exit(0);
+  // }
   // Set path to .../triforce/sph/data/simulation_name
   // If directory does not exist, it is created.
   // fs::creat_directory return 1 if created, 0 if already exists (or is not created)

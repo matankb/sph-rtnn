@@ -23,6 +23,9 @@ void example() {
 	vec3<fptype> dwdx;
 	vec3<fptype> dx = pi.loc - pj.loc;
 	fptype radius = dx.length();
+	printf("%0.70f\n", radius);
+	float square = (p1_x - p2_x) * (p1_x - p2_x);
+	printf("%0.70f, %0.70f\n", square, radius_limit * radius_limit);
 	bool finds_neighbor_manual = radius <= radius_limit;
 
 	// test using rtnn
@@ -34,6 +37,9 @@ void example() {
 	points[4] = -0.5;
 	points[5] = -0.5;
 
+	return;
+
+	/*
 	fptype** neighbors = getNeighborList(points, 2, radius_limit, 0);
 	int pairs_generated_rtnn = 0;
 	int i = 0;
@@ -52,12 +58,10 @@ void example() {
 
 	printf("\nInside radius for RTNN? %d\n", pairs_generated_rtnn > 0);
 	printf("Inside radius for SPH? %d\n", finds_neighbor_manual);
+	*/
 }
 
 int main(int argc, char **argv) {
-	example();
-	return 0;
-
 	Kokkos::initialize( argc, argv );
 	{
 		std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
