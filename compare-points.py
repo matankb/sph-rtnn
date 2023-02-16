@@ -97,6 +97,6 @@ def compare_all_csvs():
 
     print("Matched: {matched} | Missed: {missed}".format(matched=total_matched / 2, missed=total_missed))
 
-compare_all_csvs()
+# compare_all_csvs()
 
-# compare_csvs(13)
+compare_csvs(1)

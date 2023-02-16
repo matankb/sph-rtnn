@@ -129,7 +129,7 @@ void Parameters::init_diffusion_problem() {
   sim.artificial_heat = false;
   sim.save_step = 1;
   sim.print_step = 1;
-  sim.max_neighbors = 500;
+  sim.max_neighbors = 100;
   sim.neighborOption = 0; // 0 = directFind (default), 1 = linkedList
 
   time.dt = 5.0E-5; // seconds
@@ -140,7 +140,7 @@ void Parameters::init_diffusion_problem() {
 
 //    ParticleGroup p1;
   p1.name = "fluid";
-  p1.num_particles = {100, 1, 1};
+  p1.num_particles = {10000, 1, 1}; 
   p1.mass_density = 1.0;    // kg/m^3
   p1.pressure = 1.0; // Pa
   p1.internal_energy = 2.5;  // Joules

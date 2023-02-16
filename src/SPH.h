@@ -229,8 +229,11 @@ void SPH::step( const fptype dt, uint32_t timestep ) {
   // right before the neighbor list is updated, save the list of points that it is operating on
   // save_particles_to_csv(*pm, "before", timestep);
   
+  auto startSearch = high_resolution_clock::now();
   neighborFinder->updateNeighborList(timestep);
-  printf("now sorting...");
+  auto endSearch = high_resolution_clock::now();
+  double searchTime = (duration_cast<microseconds>(endSearch - startSearch)).count();
+  printf("Search time: %f", searchTime);
   neighborFinder->sortNeighborList(timestep);
   printf("Finished sorting\n");
 

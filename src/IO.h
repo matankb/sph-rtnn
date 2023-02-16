@@ -23,7 +23,7 @@ void save_particles_to_csv(const ParticleManagerBase &pm, const std::string &sim
   // If directory does not exist, it is created.
   // fs::creat_directory return 1 if created, 0 if already exists (or is not created)
   fs::path path = fs::current_path();
-  path /= fs::path("data/" POINTS_PATH + sim_name);
+  path /= fs::path("data/" POINTS_PATH);
   fs::create_directory(path);
 
   // Create file path, open ofstream object
@@ -31,7 +31,7 @@ void save_particles_to_csv(const ParticleManagerBase &pm, const std::string &sim
   std::ofstream file(filename);
 
   // Header line
-  file << "pid, x, y, z, vx, vy, vz, mass, rho, pressure, internal energy, sound speed, hsml\n";
+  // file << "pid, x, y, z, vx, vy, vz, mass, rho, pressure, internal energy, sound speed, hsml\n";
 
   // Set precision to max
   // file << std::setprecision(std::numeric_limits<fptype>::max_digits10);
@@ -39,7 +39,9 @@ void save_particles_to_csv(const ParticleManagerBase &pm, const std::string &sim
 
   // Iterate over particles and print to file
   for (uint32_t i = 0; i < pm.pNum; i++) {
-    file << i << "," << pm.getParticle(i) << "\n";
+    // file << i << "," << pm.getParticle(i) << "\n";
+    Particle p = pm.getParticle(i);
+    file << p.loc.x() << "," << p.loc.y() << "," << p.loc.z() << "\n";
   }
 
 }

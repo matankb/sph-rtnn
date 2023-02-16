@@ -208,7 +208,9 @@ void NeighborsBase::updateNeighborList(int frame) {
     int neighbors_count = pm->pNum;
     int max_interactions = pm->maxSize * params->sim.max_neighbors;
     fptype* a = new fptype[1];
+    printf("MAX INTERACTIONS: %d", max_interactions);
     float** computed_neighbors = getNeighborList(points, radii, neighbors_count, radius_limit, max_interactions, frame);//)pm->pNum);
+    printf("Got computed neighbors\n");
 
     // printf("\n======= NOW PRINTING NEIGHBORS LIST ====== \n\n");
 
@@ -220,12 +222,17 @@ void NeighborsBase::updateNeighborList(int frame) {
 
     for (uint32_t i = 0; i < (neighbors_count * neighbors_count); i++) {
       float* current_neighbor = computed_neighbors[i];
-      if (current_neighbor == NULL) { // computer_neighbors is null-terminated
-        // printf("Neighbor is null!");
+      if (current_neighbor == NULL) { // computed_neighbors is null-terminated
+        printf("Neighbor is null!");
         // continue;
         break;
       }
+      // if (i % 100 == 0) {
+      //   printf("%d\n", i);
+      // }
       
+      /*
+
       // get index of points
       uint32_t first_index = -1;
       uint32_t second_index = -1;
@@ -248,16 +255,21 @@ void NeighborsBase::updateNeighborList(int frame) {
         continue;
       }
 
+      */
+
+      uint32_t first_index = current_neighbor[0];
+      uint32_t second_index = current_neighbor[1];
+
       int found_duplicate = 0;
       // deduplicate
-      for (uint32_t k = 0; k < pCount; k++) {
-        neighbors pair = neighborList_h(k);
-        if (pair.pid1 == second_index && pair.pid2 == first_index) {
-          // printf("Found duplicate!!\n");
-          found_duplicate = 1;
-          break;
-        }
-      }
+      // for (uint32_t k = 0; k < pCount; k++) {
+      //   neighbors pair = neighborList_h(k);
+      //   if (pair.pid1 == second_index && pair.pid2 == first_index) {
+      //     // printf("Found duplicate!!\n");
+      //     found_duplicate = 1;
+      //     break;
+      //   }
+      // }
 
       if (found_duplicate) {
         continue;
@@ -277,15 +289,6 @@ void NeighborsBase::updateNeighborList(int frame) {
       fptype radius = dx.length();
       kernelCopy.computeKernel(w, dwdx, dx, radius, 0.5*(pi.hsml + pj.hsml));
 
-      if (frame == 2 && first_index == 1 && second_index == 2) {
-        // printf("i = %d | %0.100f, %0.100f, %0.100f", first_index, pi.loc.x(), pi.loc.y(), pi.loc.z());
-        // printf("j = %d | %0.100f, %0.100f, %0.100f", second_index, pj.loc.x(), pj.loc.y(), pj.loc.z());
-        printf("i = %d | %0.100f\n", first_index, pi.hsml);
-        printf("j = %d | %0.100f\n", second_index, pj.hsml);
-        printf("Here we are!\n");
-        printf("Computed W %0.100f\n", w);
-        // printf()
-      }
       // int newPCount = Kokkos::atomic_fetch_add(&pairCounter(), 1);
 
       neighborList_h(pCount) = {first_index, second_index, w, dwdx};
@@ -293,16 +296,21 @@ void NeighborsBase::updateNeighborList(int frame) {
       // interactionCount_h(first_index)
       pCount++;
 
-      // free the memory
-      free(computed_neighbors[i]);
+
+    // printf("hi\n");
+          // free the memory
+      delete computed_neighbors[i];
+
+    // printf("there\n");
       // printf("now we are here, right?");
     }
 
+    printf("Put it all back in neighborList %d\n", pCount);
+
     // TODO: maybe have caching? but see my question below. this just resets neighbors list every time
     // neighborList(1) = 
-    // TODO: max interactions
 
-    free(computed_neighbors);
+    delete computed_neighbors;
 
     printf("Setting the pair counter to: %d", pCount);
     // copy back to device views
@@ -324,10 +332,12 @@ void NeighborsBase::updateNeighborList(int frame) {
       // printf("we are at frame = %d\n", frame);
       // printf("Max interactions: %d\n", maxInteractions());
       auto pi = pmCopy.getParticleDevice(i);
-
+      // printf("Max interactions: %d\n", maxInteractions());
       // printf("SEARCHING THROUGH POINTS:\n");
       for (uint32_t j = 0; j < nParticles(); j++) {
-
+        if (i % 100 == 0) {
+          // printf("%d\n", i);
+        }
         if (i != j) {
         if (pairCounter() >= maxInteractions()) { break; }
         auto pj = pmCopy.getParticleDevice(j);
@@ -379,8 +389,8 @@ void NeighborsBase::updateNeighborList(int frame) {
     } // end kokkos_lambda
   ); // end parallel_for
 
-  auto endSearch = high_resolution_clock::now();
-  double searchTime = (duration_cast<microseconds>(endSearch - startSearch)).count();
-  printf("Search time: %f", searchTime);
+  // auto endSearch = high_resolution_clock::now();
+  // double searchTime = (duration_cast<microseconds>(endSearch - startSearch)).count();
+  // printf("Search time: %f", searchTime);
 } // end updateNeighborList
 #endif // TRIFORCE_NEIGHBORS_BASE_H
